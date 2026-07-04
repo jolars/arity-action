@@ -14,10 +14,11 @@ Guidance for agentic coding assistants in `arity-action`.
 - `action.yml`: action API (inputs/outputs) and execution steps.
 - `scripts/install-arity.sh`: Unix installer (with SHA256 verification).
 - `scripts/install-arity.ps1`: Windows installer (with SHA256 verification).
-- `.github/workflows/ci.yml`: integration tests + semantic-release.
+- `.github/workflows/ci.yml`: integration tests + versionary release job.
 - `.github/workflows/update-major-minor-tags.yml`: release tag maintenance.
 - `fixtures/ok.R`, `fixtures/bad.R`: expected pass/fail fixtures.
-- `.releaserc.json`: semantic-release + conventional commit settings.
+- `versionary.jsonc`: versionary release config (`simple` strategy).
+- `version.txt`: the current version, managed by versionary.
 
 ## Tooling Assumptions
 

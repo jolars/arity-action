@@ -76,35 +76,22 @@ jobs:
             exit 1
           }
 
-  release:
-    name: Release
+  versionary:
+    name: Versionary
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: all-tests-passed
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
       pull-requests: write
-      id-token: write
+      issues: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          persist-credentials: false
+          fetch-tags: true
+          token: ${{ secrets.RELEASE_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - uses: jolars/versionary@v0
         with:
-          node-version: "lts/*"
-
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          npx --yes \
-            --package @semantic-release/changelog \
-            --package @semantic-release/git \
-            --package conventional-changelog-conventionalcommits \
-            --package semantic-release-replace-plugin \
-            semantic-release
+          github-token: ${{ secrets.RELEASE_TOKEN }}
