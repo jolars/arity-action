@@ -54,7 +54,7 @@ runs:
 
     - name: Cache arity binary
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{ runner.temp }}/arity-bin
         key: arity-${{ steps.resolve.outputs.resolved-version }}-${{ runner.os }}-${{ runner.arch }}
