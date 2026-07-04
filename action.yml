@@ -1,0 +1,150 @@
+name: "arity-action"
+description: "Install arity and run format/lint checks"
+author: "jolars"
+inputs:
+  path:
+    description: "File or directory to check"
+    required: false
+    default: "."
+  version:
+    description: "arity version to install (latest or vX.Y.Z)"
+    required: false
+    default: "latest"
+  format:
+    description: "Run arity format --check"
+    required: false
+    default: "true"
+  lint:
+    description: "Run arity lint"
+    required: false
+    default: "true"
+  config:
+    description: "Optional path to an arity.toml config file"
+    required: false
+    default: ""
+  verify-checksum:
+    description: "Verify the downloaded asset against its published SHA256 (skips with a warning if the release has no checksum)"
+    required: false
+    default: "true"
+outputs:
+  version:
+    description: "The installed arity version"
+    value: ${{ steps.version-unix.outputs.version || steps.version-windows.outputs.version }}
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve arity version
+      id: resolve
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -eu
+        REQUESTED="${{ inputs.version }}"
+        if [ "$REQUESTED" = "latest" ]; then
+          RESOLVED="$(gh release view --repo jolars/arity --json tagName --jq .tagName)"
+          echo "Resolved latest to ${RESOLVED}"
+        else
+          case "$REQUESTED" in
+          v*) RESOLVED="$REQUESTED" ;;
+          *) RESOLVED="v${REQUESTED}" ;;
+          esac
+        fi
+        echo "resolved-version=${RESOLVED}" >> "$GITHUB_OUTPUT"
+
+    - name: Cache arity binary
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/arity-bin
+        key: arity-${{ steps.resolve.outputs.resolved-version }}-${{ runner.os }}-${{ runner.arch }}
+
+    - name: Install arity (Unix)
+      if: runner.os != 'Windows' && steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: bash "${{ github.action_path }}/scripts/install-arity.sh"
+      env:
+        ARITY_REPO: jolars/arity
+        ARITY_VERSION: ${{ steps.resolve.outputs.resolved-version }}
+        ARITY_INSTALL_DIR: ${{ runner.temp }}/arity-bin
+        ARITY_VERIFY_CHECKSUM: ${{ inputs.verify-checksum }}
+
+    - name: Install arity (Windows)
+      if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: . "${{ github.action_path }}/scripts/install-arity.ps1"
+      env:
+        ARITY_REPO: jolars/arity
+        ARITY_VERSION: ${{ steps.resolve.outputs.resolved-version }}
+        ARITY_INSTALL_DIR: ${{ runner.temp }}\arity-bin
+        ARITY_VERIFY_CHECKSUM: ${{ inputs.verify-checksum }}
+
+    - name: Add arity to PATH (Unix)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: echo "${{ runner.temp }}/arity-bin" >> "$GITHUB_PATH"
+
+    - name: Add arity to PATH (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: Add-Content -Path $env:GITHUB_PATH -Value "${{ runner.temp }}\arity-bin"
+
+    - name: Capture arity version (Unix)
+      if: runner.os != 'Windows'
+      id: version-unix
+      shell: bash
+      run: |
+        VERSION="$(arity --version | awk '{print $2}')"
+        echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Capture arity version (Windows)
+      if: runner.os == 'Windows'
+      id: version-windows
+      shell: pwsh
+      run: |
+        $versionLine = arity --version
+        $version = ($versionLine -split ' ')[1]
+        "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+    - name: Run format check (Unix)
+      if: runner.os != 'Windows' && inputs.format == 'true'
+      shell: bash
+      run: |
+        CONFIG_ARGS=()
+        if [ -n "${{ inputs.config }}" ]; then
+          CONFIG_ARGS=(--config "${{ inputs.config }}")
+        fi
+        arity format --check "${{ inputs.path }}" "${CONFIG_ARGS[@]}"
+
+    - name: Run format check (Windows)
+      if: runner.os == 'Windows' && inputs.format == 'true'
+      shell: pwsh
+      run: |
+        $arityArgs = @("format", "--check", "${{ inputs.path }}")
+        if ("${{ inputs.config }}" -ne "") {
+          $arityArgs += @("--config", "${{ inputs.config }}")
+        }
+        & arity @arityArgs
+
+    - name: Run lint check (Unix)
+      if: runner.os != 'Windows' && inputs.lint == 'true'
+      shell: bash
+      run: |
+        CONFIG_ARGS=()
+        if [ -n "${{ inputs.config }}" ]; then
+          CONFIG_ARGS=(--config "${{ inputs.config }}")
+        fi
+        arity lint "${{ inputs.path }}" "${CONFIG_ARGS[@]}"
+
+    - name: Run lint check (Windows)
+      if: runner.os == 'Windows' && inputs.lint == 'true'
+      shell: pwsh
+      run: |
+        $arityArgs = @("lint", "${{ inputs.path }}")
+        if ("${{ inputs.config }}" -ne "") {
+          $arityArgs += @("--config", "${{ inputs.config }}")
+        }
+        & arity @arityArgs
+branding:
+  icon: code
+  color: gray-dark
