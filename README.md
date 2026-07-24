@@ -7,7 +7,8 @@ formatting and lint checks in CI.
 
 The action installs prebuilt release binaries and supports GitHub-hosted runners
 for Linux, macOS, and Windows on both x64 and ARM64. Downloaded binaries are
-verified against their published SHA256 checksum and cached between runs.
+verified against their published SHA256 checksum and build provenance
+attestation, and cached between runs.
 
 ## Usage
 
@@ -93,6 +94,29 @@ When `verify-checksum` is `true` (the default), the action downloads the
 archive before installing. Releases that predate checksum publishing have no
 sidecar; for those the action prints a warning and installs without
 verification rather than failing.
+
+Checksums guard against corrupted or truncated downloads; they are not a
+substitute for release signing.
+
+## Build provenance
+
+Arity release archives carry a [build provenance
+attestation](https://docs.github.com/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds),
+signed via Sigstore and tied to the workflow that built them. Unlike a
+checksum, this cannot be forged by an attacker who only controls the release
+assets. When the `gh` CLI is available, this action verifies it before
+installing; a failing attestation aborts the install, while a missing one
+(older releases) or a missing `gh` warns and continues.
+
+To verify by hand:
+
+```bash
+gh attestation verify arity-x86_64-unknown-linux-gnu.tar.gz \
+  --repo jolars/arity
+```
+
+Add `--signer-workflow jolars/arity/.github/workflows/packages.yml` to also
+pin the exact workflow that must have produced the artifact.
 
 ## Versioning
 

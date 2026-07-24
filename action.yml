@@ -89,6 +89,8 @@ runs:
         ARITY_VERSION: ${{ steps.resolve.outputs.resolved-version }}
         ARITY_INSTALL_DIR: ${{ runner.temp }}/arity-bin
         ARITY_VERIFY_CHECKSUM: ${{ inputs.verify-checksum }}
+        # Lets the install script run `gh attestation verify`.
+        GH_TOKEN: ${{ github.token }}
 
     - name: Install arity (Windows)
       if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
@@ -99,6 +101,8 @@ runs:
         ARITY_VERSION: ${{ steps.resolve.outputs.resolved-version }}
         ARITY_INSTALL_DIR: ${{ runner.temp }}\arity-bin
         ARITY_VERIFY_CHECKSUM: ${{ inputs.verify-checksum }}
+        # Lets the install script run `gh attestation verify`.
+        GH_TOKEN: ${{ github.token }}
 
     - name: Add arity to PATH (Unix)
       if: runner.os != 'Windows'

@@ -53,6 +53,29 @@ try {
         }
     }
 
+    # Verify build provenance when the gh CLI is available. Stronger than the
+    # checksum: it ties the archive to the workflow that built it. A present-
+    # but-failing attestation aborts; a missing attestation (older releases) or
+    # missing gh warns and continues. When no attestation exists, gh reports it
+    # either as "no attestations found" or as an HTTP 404 on the attestations
+    # API endpoint, so tolerate both.
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+        $attestOut = & gh attestation verify $zipPath --repo $repo 2>&1 | Out-String
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Verified $asset provenance (attestation)"
+        } elseif ($attestOut -match '(?i)no attestation|http 404') {
+            Write-Warning "No provenance attestation for this release; skipping"
+            # gh left a non-zero $LASTEXITCODE; clear it so the step, whose exit
+            # code GitHub derives from $LASTEXITCODE, does not inherit it.
+            $global:LASTEXITCODE = 0
+        } else {
+            Write-Host $attestOut
+            throw "Provenance verification failed for $asset"
+        }
+    } else {
+        Write-Warning "gh CLI not found; skipping provenance verification"
+    }
+
     Expand-Archive -Path $zipPath -DestinationPath $tmpDir -Force
     New-Item -ItemType Directory -Path $installDir -Force | Out-Null
     Copy-Item -Path (Join-Path $tmpDir 'arity.exe') -Destination (Join-Path $installDir 'arity.exe') -Force

@@ -12,8 +12,8 @@ Guidance for agentic coding assistants in `arity-action`.
 ## Repository Map
 
 - `action.yml`: action API (inputs/outputs) and execution steps.
-- `scripts/install-arity.sh`: Unix installer (with SHA256 verification).
-- `scripts/install-arity.ps1`: Windows installer (with SHA256 verification).
+- `scripts/install-arity.sh`: Unix installer (verifies checksum + provenance).
+- `scripts/install-arity.ps1`: Windows installer (verifies checksum + provenance).
 - `.github/workflows/ci.yml`: integration tests + versionary release job.
 - `.github/workflows/update-major-minor-tags.yml`: release tag maintenance.
 - `fixtures/ok.R`, `fixtures/bad.R`: expected pass/fail fixtures.
@@ -58,5 +58,9 @@ Run from repo root.
 ## Security
 
 - Download artifacts only over HTTPS from GitHub Releases.
+- Verify downloads against the published `.sha256` sidecar; a mismatch aborts,
+  a missing sidecar (older releases) warns and continues.
+- Verify build provenance with `gh attestation verify` when `gh` is available;
+  a failing attestation aborts, a missing one or missing `gh` warns.
 - Never log secrets/tokens.
 - Treat release/tag automation edits as high risk.
