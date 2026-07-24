@@ -14,7 +14,7 @@ Guidance for agentic coding assistants in `arity-action`.
 - `action.yml`: action API (inputs/outputs) and execution steps.
 - `scripts/install-arity.sh`: Unix installer (verifies checksum + provenance).
 - `scripts/install-arity.ps1`: Windows installer (verifies checksum + provenance).
-- `.github/workflows/ci.yml`: integration tests + versionary release job.
+- `.github/workflows/ci.yml`: lint, integration tests, and the versionary release job.
 - `.github/workflows/update-major-minor-tags.yml`: release tag maintenance.
 - `fixtures/ok.R`, `fixtures/bad.R`: expected pass/fail fixtures.
 - `versionary.jsonc`: versionary release config (`simple` strategy).
@@ -30,10 +30,13 @@ Guidance for agentic coding assistants in `arity-action`.
 
 Run from repo root.
 
+The `lint` job in `ci.yml` runs all of these; run them locally before pushing.
+
 - Shell syntax: `sh -n scripts/install-arity.sh`
+- ShellCheck: `shellcheck scripts/install-arity.sh`
 - PowerShell parse check:
   `pwsh -NoLogo -NoProfile -Command "[void][ScriptBlock]::Create((Get-Content -Raw 'scripts/install-arity.ps1'))"`
-- Optional stronger checks (if installed): `shellcheck scripts/install-arity.sh`, `actionlint`
+- Workflow lint: `actionlint`
 
 ## Test
 
