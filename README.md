@@ -77,6 +77,7 @@ jobs:
 | `path`            | File or directory to check                        | `.`      |
 | `version`         | arity version to install (`latest` or `vX.Y.Z`)   | `latest` |
 | `format`          | Run `arity format --check`                        | `true`   |
+| `quiet`           | Suppress the `format --check` diff (list only)    | `false`  |
 | `lint`            | Run `arity lint`                                  | `true`   |
 | `config`          | Optional path to an `arity.toml` config file      | `""`     |
 | `verify-checksum` | Verify the downloaded asset against its SHA256    | `true`   |
