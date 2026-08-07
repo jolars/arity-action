@@ -9,11 +9,43 @@ VERIFY="${ARITY_VERIFY_CHECKSUM:-true}"
 os="$(uname -s)"
 arch="$(uname -m)"
 
+# Linux releases ship both glibc and musl builds. Hosted runners are always
+# glibc, but a job running in a musl container (e.g. `container: alpine:...`)
+# still reports RUNNER_OS=Linux, so probe the libc rather than assume glibc.
+# On musl `ldd --version` writes to stderr and exits non-zero, hence the 2>&1.
+detect_libc() {
+	if [ -n "${ARITY_LIBC:-}" ]; then
+		case "$ARITY_LIBC" in
+		gnu | musl) printf '%s\n' "$ARITY_LIBC" ;;
+		*)
+			echo "ARITY_LIBC must be 'gnu' or 'musl', got '$ARITY_LIBC'" >&2
+			exit 1
+			;;
+		esac
+		return 0
+	fi
+
+	if ldd --version 2>&1 | grep -qi musl; then
+		printf 'musl\n'
+		return 0
+	fi
+
+	for loader in /lib/ld-musl-*.so.1; do
+		if [ -e "$loader" ]; then
+			printf 'musl\n'
+			return 0
+		fi
+	done
+
+	printf 'gnu\n'
+}
+
 case "$os" in
 Linux)
+	libc="$(detect_libc)"
 	case "$arch" in
-	x86_64 | amd64) target="x86_64-unknown-linux-gnu" ;;
-	aarch64 | arm64) target="aarch64-unknown-linux-gnu" ;;
+	x86_64 | amd64) target="x86_64-unknown-linux-${libc}" ;;
+	aarch64 | arm64) target="aarch64-unknown-linux-${libc}" ;;
 	*)
 		echo "Unsupported Linux architecture: $arch" >&2
 		exit 1
