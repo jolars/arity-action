@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0](https://github.com/jolars/arity-action/compare/v1.1.0...v1.2.0) (2026-08-07)
+
+### Features
+- add `quiet` input to trim the format-check diff ([`81beb73`](https://github.com/jolars/arity-action/commit/81beb733592506295923a8c9dbfafcf9099bde83))
+- verify build provenance attestations ([`4f79a75`](https://github.com/jolars/arity-action/commit/4f79a757b4d16f8dc3feefd312201035b3b68023))
+
+### Bug Fixes
+- update install arity script ([`370bff0`](https://github.com/jolars/arity-action/commit/370bff06df9aa8a3b315939c06bdbcaec79746c8))
+- resolve latest release by expected asset name ([`4dd0c1e`](https://github.com/jolars/arity-action/commit/4dd0c1e356fb5fe232b6d813d472fa7747846c62))
+
 ## [1.1.0](https://github.com/jolars/arity-action/compare/v1.0.0...v1.1.0) (2026-07-25)
 
 ### Features
